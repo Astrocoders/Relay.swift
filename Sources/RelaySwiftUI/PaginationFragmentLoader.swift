@@ -2,7 +2,7 @@ import Combine
 import Foundation
 import Relay
 
-class PaginationFragmentLoader<Fragment: Relay.PaginationFragment>: ObservableObject, Paginating {
+class PaginationFragmentLoader<Fragment: Relay.PaginationFragment>: ObservableObject {
     let fragmentLoader: RefetchFragmentLoader<Fragment>
 
     var fragmentLoaderCancellable: AnyCancellable?
@@ -47,8 +47,8 @@ class PaginationFragmentLoader<Fragment: Relay.PaginationFragment>: ObservableOb
         Pager(loader: self)
     }
 
-    func refetch(_ variables: Fragment.Operation.Variables?) {
-        fragmentLoader.refetch(variables)
+    func refetch(_ variables: Fragment.Operation.Variables?, from resource: FragmentResource, queryResource: QueryResource, key: Fragment.Key) {
+        fragmentLoader.refetch(variables, from: resource, queryResource: queryResource, key: key)
     }
 
     func loadNext(_ count: Int) {
@@ -185,7 +185,7 @@ class PaginationFragmentLoader<Fragment: Relay.PaginationFragment>: ObservableOb
     }
 }
 
-struct Pager<Fragment: Relay.PaginationFragment>: Paginating {
+struct Pager<Fragment: Relay.PaginationFragment> {
     let hasNext: Bool
     let hasPrevious: Bool
     let isLoadingNext: Bool
@@ -201,7 +201,7 @@ struct Pager<Fragment: Relay.PaginationFragment>: Paginating {
     }
 
     func refetch(_ variables: Fragment.Operation.Variables?) {
-        loader.refetch(variables)
+        loader.refetch(variables, from: resource, queryResource: queryResource, key: key)
     }
 
     func loadNext(_ count: Int) {
