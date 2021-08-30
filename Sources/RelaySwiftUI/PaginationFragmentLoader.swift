@@ -200,7 +200,7 @@ struct Pager<Fragment: Relay.PaginationFragment> {
         self.loader = loader
     }
 
-    func refetch(_ variables: Fragment.Operation.Variables?) {
+    func refetch(_ variables: Fragment.Operation.Variables?, from resource: FragmentResource, queryResource: QueryResource, key: Fragment.Key) {
         loader.refetch(variables, from: resource, queryResource: queryResource, key: key)
     }
 
