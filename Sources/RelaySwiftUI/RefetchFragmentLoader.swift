@@ -2,7 +2,7 @@ import Combine
 import Foundation
 import Relay
 
-class RefetchFragmentLoader<Fragment: Relay.RefetchFragment>: ObservableObject, Refetching {
+class RefetchFragmentLoader<Fragment: Relay.RefetchFragment>: ObservableObject {
     typealias RefetchVariables = Fragment.Operation.Variables
 
     let metadata: Fragment.Metadata
@@ -16,18 +16,13 @@ class RefetchFragmentLoader<Fragment: Relay.RefetchFragment>: ObservableObject, 
     private var fragmentLoaderCancellable: AnyCancellable?
     private var refetchCancellable: AnyCancellable?
     private var retainCancellable: AnyCancellable?
+    private var doneRefetching: (() -> Void)?
 
     init() {
         self.metadata = Fragment.metadata
         self.fragmentLoader = FragmentLoader()
-
-//        if #available(iOS 14.0, macOS 10.16, tvOS 14.0, watchOS 7.0, *) {
-//            fragmentLoader.$snapshot.assign(to: $snapshot)
-//        } else {
-            fragmentLoaderCancellable = fragmentLoader.$snapshot.sink { [weak self] newSnapshot in
-                self?.snapshot = newSnapshot
-            }
-//        }
+        
+        fragmentLoader.$snapshot.assign(to: &$snapshot)
     }
 
     func load(from resource: FragmentResource, queryResource: QueryResource, key: Fragment.Key) {
@@ -46,8 +41,11 @@ class RefetchFragmentLoader<Fragment: Relay.RefetchFragment>: ObservableObject, 
                 guard let self = self else { return }
 
                 switch result {
-                case nil, .failure:
+                case nil:
                     self.snapshot = nil
+                case .failure:
+                    self.snapshot = nil
+                    self.stopRefetchingIfNeeded()
                 case .success(let queryResult):
                     self.retainCancellable = queryResource.retain(queryResult)
 
@@ -64,6 +62,7 @@ class RefetchFragmentLoader<Fragment: Relay.RefetchFragment>: ObservableObject, 
                     let fragmentRef = fragmentObject.get(fragment: fragmentNode.name)!
 
                     self.fragmentLoader.load(from: resource, node: fragmentNode, ref: fragmentRef)
+                    self.stopRefetchingIfNeeded()
                 }
             }
 
@@ -85,7 +84,7 @@ class RefetchFragmentLoader<Fragment: Relay.RefetchFragment>: ObservableObject, 
         fragmentLoader.selector
     }
 
-    func refetch(_ variables: RefetchVariables?) {
+    func refetch(_ variables: RefetchVariables?, from resource: FragmentResource, queryResource: QueryResource, key: Fragment.Key) {
         guard var variables = variables?.variableData ?? selector?.owner.variables else {
             preconditionFailure("Attempting to refetch before the fragment has even been loaded")
         }
@@ -102,6 +101,15 @@ class RefetchFragmentLoader<Fragment: Relay.RefetchFragment>: ObservableObject, 
         refetchOperation = metadata.operation.createDescriptor(variables: variables)
         isRefetchLoaded = false
         refetchKey = UUID()
+        
+        load(from: resource, queryResource: queryResource, key: key)
+    }
+    
+    private func stopRefetchingIfNeeded() {
+        if let doneRefetching = doneRefetching {
+            doneRefetching()
+            self.doneRefetching = nil
+        }
     }
 }
 

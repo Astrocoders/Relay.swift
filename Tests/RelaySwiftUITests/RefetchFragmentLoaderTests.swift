@@ -104,7 +104,8 @@ class RefetchFragmentLoaderTests: XCTestCase {
         expect(refetchKeys).to(beEmpty())
 
         let advance = try environment.delayMockedResponse(MovieInfoSectionRefetchQuery(id: "ZmlsbXM6MQ=="), MovieInfoSection.refetchEvenNewerHope)
-        loader.refetch(nil)
+
+        loader.refetch(nil, from: resource, queryResource: queryResource, key: key)
 
         expect(refetchKeys).toEventually(haveCount(1))
         loader.load(from: resource, queryResource: queryResource, key: key)
@@ -145,7 +146,8 @@ class RefetchFragmentLoaderTests: XCTestCase {
 
         // refetch with a different ID
         let advance = try environment.delayMockedResponse(MovieInfoSectionRefetchQuery(id: "ZmlsbXM6Mg=="), MovieInfoSection.refetchEmpire)
-        loader.refetch(.init(id: "ZmlsbXM6Mg=="))
+        
+        loader.refetch(.init(id: "ZmlsbXM6Mg=="), from: resource, queryResource: queryResource, key: key)
 
         expect(refetchKeys).toEventually(haveCount(1))
         loader.load(from: resource, queryResource: queryResource, key: key)
@@ -179,7 +181,8 @@ class RefetchFragmentLoaderTests: XCTestCase {
 
         // refetch with a different ID
         let advance = try environment.delayMockedResponse(MovieInfoSectionRefetchQuery(id: "ZmlsbXM6Mg=="), MovieInfoSection.refetchEmpire)
-        loader.refetch(.init(id: "ZmlsbXM6Mg=="))
+        
+        loader.refetch(.init(id: "ZmlsbXM6Mg=="), from: resource, queryResource: queryResource, key: key)
 
         expect(refetchKeys).toEventually(haveCount(1))
         loader.load(from: resource, queryResource: queryResource, key: key)

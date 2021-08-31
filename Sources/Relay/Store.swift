@@ -185,7 +185,7 @@ public class Store {
     }
 }
 
-protocol StoreSubscription: class {
+protocol StoreSubscription: AnyObject {
     func storeDidSnapshot(source: RecordSource)
     func storeDidRestore()
     func storeUpdatedRecords(_ updatedIDs: Set<DataID>) -> RequestDescriptor?
